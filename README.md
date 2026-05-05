@@ -45,7 +45,7 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/flowise` - Data storage
+- `./volumes/data/flowise` - Data storage
 
 ## 🔍 Logging
 
