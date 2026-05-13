@@ -26,14 +26,38 @@ services:
       APIKEY_PATH: /root/.flowise
       SECRETKEY_PATH: /root/.flowise
       LOG_PATH: /root/.flowise/logs
+      CONTAINER_NAME: flowise-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     ports:
       - "172.17.0.1:3001:3000"
     volumes:
       - "./volumes/data/flowise:/root/.flowise"
     networks:
       - flowise
+      - proxy
+      - cloudflare
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://flowise-app:3000'
+      - 'cloudflare.hostname=flowise.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.flowise-app.entrypoints=http'
+      - 'traefik.http.routers.flowise-app-secure.tls=true'
+      - 'traefik.http.routers.flowise-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.flowise-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.flowise-app.middlewares=flowise-app-https-redirect'
+      - 'traefik.http.routers.flowise-app-secure.entrypoints=https'
+      - 'traefik.http.routers.flowise-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.flowise-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.flowise-app-secure.service=flowise-app'
+      - 'traefik.http.services.flowise-app.loadbalancer.server.port=3000'
 
 networks:
   flowise:
     name: flowise
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
