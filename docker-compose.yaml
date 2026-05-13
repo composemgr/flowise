@@ -1,26 +1,35 @@
-# nginx proxy address - http://172.17.0.1:3000
+# nginx proxy address - http://172.17.0.1:3001
 
 name: flowise
 x-logging: &default-logging
-  options:
-    max-size: '5m'
-    max-file: '1'
   driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "1"
 
 services:
   app:
     image: flowiseai/flowise:latest
     container_name: flowise-app
-    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    hostname: ${BASE_HOST_NAME:-localhost}
     restart: always
     pull_policy: always
     logging: *default-logging
     environment:
       TZ: ${TZ:-America/New_York}
+      PORT: "3000"
+      FLOWISE_USERNAME: ${APP_ADMIN_USER:-admin}
+      FLOWISE_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
+      FLOWISE_SECRETKEY_OVERWRITE: ${APP_SECRET_KEY:-changeme_secret_key_min_32_chars}
+      DATABASE_TYPE: ${DB_TYPE:-sqlite}
+      DATABASE_PATH: /root/.flowise
+      APIKEY_PATH: /root/.flowise
+      SECRETKEY_PATH: /root/.flowise
+      LOG_PATH: /root/.flowise/logs
     ports:
-      - '172.17.0.1:3000:3000'
+      - "172.17.0.1:3001:3000"
     volumes:
-      - './volumes/data/flowise:/data'
+      - "./volumes/data/flowise:/root/.flowise"
     networks:
       - flowise
 
