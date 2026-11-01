@@ -1,0 +1,53 @@
+name: flowise
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: flowiseai/flowise:latest
+    container_name: flowise-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: flowise-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      PORT: '3000'
+      FLOWISE_USERNAME: ${APP_ADMIN_USER:-admin}
+      FLOWISE_PASSWORD: ${APP_ADMIN_PASS:-replace-with-a-random-password}
+      FLOWISE_SECRETKEY_OVERWRITE: ${APP_SECRET_KEY:-replace-with-a-random-32-character-secret}
+      DATABASE_TYPE: ${DB_TYPE:-sqlite}
+      DATABASE_PATH: /root/.flowise
+      APIKEY_PATH: /root/.flowise
+      SECRETKEY_PATH: /root/.flowise
+      LOG_PATH: /root/.flowise/logs
+    volumes:
+      - './volumes/data/flowise:/root/.flowise'
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik'
+      - 'traefik.http.routers.flowise-app.entrypoints=http'
+      - 'traefik.http.routers.flowise-app.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.flowise-app.middlewares=flowise-app-https-redirect'
+      - 'traefik.http.middlewares.flowise-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.flowise-app-secure.entrypoints=https'
+      - 'traefik.http.routers.flowise-app-secure.rule=Host(`${BASE_HOST_NAME:-$HOSTNAME}`)'
+      - 'traefik.http.routers.flowise-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.flowise-app-secure.service=flowise-app'
+      - 'traefik.http.services.flowise-app.loadbalancer.server.port=3000'
+    networks:
+      - flowise
+      - traefik
+
+networks:
+  flowise:
+    name: flowise
+    external: false
+  traefik:
+    external: true

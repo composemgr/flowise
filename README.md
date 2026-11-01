@@ -21,7 +21,8 @@ curl -q -LSsf "https://raw.githubusercontent.com/composemgr/flowise/main/docker-
 ```bash
 git clone "https://github.com/composemgr/flowise" ~/.local/srv/docker/flowise
 cd ~/.local/srv/docker/flowise
-docker compose up -d
+cp default.env .env
+docker compose --env-file .env up -d
 ```
 
 ### Option 3: Using composemgr
@@ -35,41 +36,89 @@ composemgr install flowise
 
 ```shell
 TZ=America/New_York
+APP_ORG_NAME=Flowise
+APP_ADMIN_USER=admin
+APP_ADMIN_PASS=replace-with-a-random-password
+APP_SECRET_KEY=replace-with-a-random-32-character-secret
+DB_TYPE=sqlite
 ```
 
 See `docker-compose.yaml` for complete list of configurable options.
 
+### Environment Files
+
+`default.env.sample` holds the full set of variables and is copied to `.env`
+before starting the stack:
+
+```bash
+cp default.env .env
+docker compose --env-file .env up -d
+```
+
+`app.env.sample` holds the app-specific overrides and is copied to `app.env`:
+
+```bash
+cp app.env.sample app.env
+```
+
+`composemgr up` applies `app.env` and `default.env` automatically. Raw
+`docker compose` commands need `--env-file .env` to pick up the same values.
+
+### Reverse Proxy
+
+Three standalone compose files ship in this repo:
+
+| File | Use |
+|------|-----|
+| `docker-compose.yaml` | Default, published on `172.17.0.1:64174` |
+| `docker-compose.traefik.yaml` | Behind an existing external `traefik` network |
+| `docker-compose.tunnel.yaml` | Behind an existing external `cloudflare` tunnel network |
+
+```bash
+docker compose -f docker-compose.traefik.yaml --env-file .env up -d
+```
+
 ## 🌐 Access
 
-- **Web Interface**: http://172.17.0.1:3000
+- **Web Interface**: http://172.17.0.1:64174
 
 ## 📂 Volumes
 
-- `./volumes/data/flowise` - Data storage
+- `./volumes/data/flowise` - Flowise configuration and database
+
+
+## 🔐 Security
+
+- Change all default passwords before deploying to production
+- Use strong secrets for all authentication tokens
+- The `172.17.0.1` bind address limits access to the Docker host gateway only
+- Set up HTTPS using a reverse proxy (nginx, traefik, caddy) for production
+- Keep regular backups of the database and application data volumes
+- Update Docker images regularly to pick up security patches
 
 ## 🔍 Logging
 
 ```shell
-docker compose logs -f app
+docker compose --env-file .env logs -f app
 ```
 
 ## 🛠️ Management
 
 ```bash
 # Start services
-docker compose up -d
+docker compose --env-file .env up -d
 
 # Stop services
-docker compose down
+docker compose --env-file .env down
 
 # Update to latest images
-docker compose pull && docker compose up -d
+docker compose --env-file .env pull && docker compose --env-file .env up -d
 
 # View logs
-docker compose logs -f
+docker compose --env-file .env logs -f
 
 # Restart services
-docker compose restart
+docker compose --env-file .env restart
 ```
 
 ## 📋 Requirements
