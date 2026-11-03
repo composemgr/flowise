@@ -27,6 +27,12 @@ services:
       APIKEY_PATH: /root/.flowise
       SECRETKEY_PATH: /root/.flowise
       LOG_PATH: /root/.flowise/logs
+    healthcheck:
+      test: ['CMD', 'curl', '-s', '-o', '/dev/null', '--max-time', '5', 'http://127.0.0.1:3000/']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     volumes:
       - './volumes/data/flowise:/root/.flowise'
     labels:
