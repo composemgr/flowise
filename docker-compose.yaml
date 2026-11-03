@@ -16,6 +16,7 @@ services:
     restart: always
     pull_policy: always
     logging: *default-logging
+    user: '0:0'
     environment:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: flowise-app
